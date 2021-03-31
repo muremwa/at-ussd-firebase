@@ -1,28 +1,9 @@
 import dispatcher from '../dispatcher/dispatcher';
+import ajax from './ajaxWrapper';
+import { namesUrl } from '../index';
 
 
-export function fetchNames () {
-    const names = [
-        {
-            name: "Jane Fonda Action",
-            progress: "6 months",
-            status: "Okay",
-            statusNum: 1
-        },
-        {
-            name: "Esther Wainaina",
-            progress: "2 months",
-            status: "Semi-Okay",
-            statusNum: 2
-        },
-        {
-            name: "Carol Wangui Njogu",
-            progress: "6 months",
-            status: "Not-Okay",
-            statusNum: 3
-        }
-    ];
-
+export function fetchNames (errorHandler) {
     const dispatchNamesToStore = (data) => {
         dispatcher.dispatch({
             type: 'FETCH_NAMES',
@@ -30,8 +11,15 @@ export function fetchNames () {
         });
     };
 
-    setTimeout(() => {
-        dispatchNamesToStore(names);
-    }, 3000)
+    const options = {
+        url: namesUrl,
+        responseType: 'json',
+        success: (response) => {
+            dispatchNamesToStore(response.response)
+        },
+        error: () => errorHandler(),
+    };
+
+    ajax.get(options);
 
 };

@@ -9,16 +9,40 @@ import { fetchNames } from '../../actions/actions'
 import '../../css/dash.css';
 
 
-function LoadingScreen () {
+function LoadingScreen (props) {
+    const namesAvailable = props.names;
+
     const alertStyle = {
         marginTop: '2em',
         textAlign: 'center'
     };
 
+    let alertType, message;
+
+    switch (namesAvailable) {
+        case '0':
+            alertType = 'info';
+            message = 'No names available.'
+            break;
+
+        case 'loading':
+            alertType = 'warning';
+            message = 'Loading names...';
+            break;
+
+        case 'error':
+            alertType = 'danger';
+            message = 'An error occured and could not load the names';
+            break;
+    
+        default:
+            break;
+    }
+
     return (
         <Container style={alertStyle}>
-			<Alert variant="warning">
-				<Alert.Heading>Loading names...</Alert.Heading>
+			<Alert variant={alertType}>
+				<Alert.Heading>{message}</Alert.Heading>
 			</Alert>
 		</Container>
     );
@@ -70,9 +94,12 @@ function DashRow (props) {
 
 export default function NamesSection (props) {
     const [isLoaded, setLoading] = useState(false);
+    const [errorLoad, setError] = useState(false);
+
+    const errorFetchingNames = () => setError(true);
 
     if (!isLoaded) {
-        fetchNames();
+        fetchNames(errorFetchingNames);
     };
 
     const [ogNames, setNames] = useState([]);
@@ -94,7 +121,7 @@ export default function NamesSection (props) {
         <Col md={9} id="ls">
             <div className="lss">
                 <DashRow number="No." name="Name" progress="Progress" status="status" title={true} />
-                {isLoaded? names: <LoadingScreen />}
+                {isLoaded? names.length > 0? names: <LoadingScreen names={'0'} />: errorLoad? <LoadingScreen names={'error'} />: <LoadingScreen names={'loading'} />}
             </div>
         </Col>
     )

@@ -1,9 +1,28 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 
-import { Col } from 'react-bootstrap';
+import { Col, Container, Alert } from 'react-bootstrap';
+
+import leedsStore from '../../store/leedsStore';
+import { fetchNames } from '../../actions/actions'
 
 import '../../css/dash.css';
+
+
+function LoadingScreen () {
+    const alertStyle = {
+        marginTop: '2em',
+        textAlign: 'center'
+    };
+
+    return (
+        <Container style={alertStyle}>
+			<Alert variant="warning">
+				<Alert.Heading>Loading names...</Alert.Heading>
+			</Alert>
+		</Container>
+    );
+};
 
 
 function DashRow (props) {
@@ -50,32 +69,32 @@ function DashRow (props) {
 
 
 export default function NamesSection (props) {
-    const names = [
-        {
-            name: "Jane Fonda",
-            progress: "6 months",
-            status: "Okay",
-            statusNum: 1
-        },
-        {
-            name: "Esther Wainaina",
-            progress: "2 months",
-            status: "Semi-Okay",
-            statusNum: 2
-        },
-        {
-            name: "Carol Wangui Njogu",
-            progress: "6 months",
-            status: "Not-Okay",
-            statusNum: 3
-        }
-    ].map((name, i) => <DashRow key={i} number={`${++i}.`} {...name} />)
+    const [isLoaded, setLoading] = useState(false);
+
+    if (!isLoaded) {
+        fetchNames();
+    };
+
+    const [ogNames, setNames] = useState([]);
+
+    const names = ogNames.map((name, i) => <DashRow key={i} number={`${++i}.`} {...name} />)
+
+    const loadTheNames = () => {
+        setLoading(true);
+        setNames(leedsStore.getNames());
+    };
+
+    useEffect(() => {
+        leedsStore.on(leedsStore.actions.NEW_NAMES, loadTheNames);
+
+        return () => leedsStore.removeListener(leedsStore.actions.NEW_NAMES, loadTheNames);
+    });
 
     return (
         <Col md={9} id="ls">
             <div className="lss">
                 <DashRow number="No." name="Name" progress="Progress" status="status" title={true} />
-                {names}
+                {isLoaded? names: <LoadingScreen />}
             </div>
         </Col>
     )

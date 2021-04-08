@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react'
-
-
+import React from 'react'
 import { Col, Container, Alert } from 'react-bootstrap';
-
-import leedsStore from '../../store/leedsStore';
-import { fetchNames } from '../../actions/actions'
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import { leedsFirestore } from '../../fire/main';
+import { cleanNames } from '../utils/namesUtil';
 
 import '../../css/dash.css';
 
@@ -22,7 +20,7 @@ function LoadingScreen (props) {
     switch (namesAvailable) {
         case '0':
             alertType = 'info';
-            message = 'No names available.'
+            message = 'No names available. (May also be a problem with your network)';
             break;
 
         case 'loading':
@@ -92,36 +90,18 @@ function DashRow (props) {
 };
 
 
-export default function NamesSection (props) {
-    const [isLoaded, setLoading] = useState(false);
-    const [errorLoad, setError] = useState(false);
-
-    const errorFetchingNames = () => setError(true);
-
-    if (!isLoaded) {
-        fetchNames(errorFetchingNames);
-    };
-
-    const [ogNames, setNames] = useState([]);
-
-    const names = ogNames.map((name, i) => <DashRow key={i} number={`${++i}.`} {...name} />)
-
-    const loadTheNames = () => {
-        setLoading(true);
-        setNames(leedsStore.getNames());
-    };
-
-    useEffect(() => {
-        leedsStore.on(leedsStore.actions.NEW_NAMES, loadTheNames);
-
-        return () => leedsStore.removeListener(leedsStore.actions.NEW_NAMES, loadTheNames);
-    });
+export default function NamesSection () {
+    const namesRef = leedsFirestore.collection('users');
+    const q = namesRef.limit(20);
+    const [_names, loading, error] = useCollectionData(q, {idField: 'phoneNumber'});
+    const names = _names? _names.map((_name) => cleanNames(_name)): [];
+    const rowNames = names.map((name, i) => <DashRow key={name.phone} number={`${++i}.`} {...name} />);
 
     return (
         <Col md={9} id="ls">
             <div className="lss">
                 <DashRow number="No." name="Name" progress="Progress" status="status" title={true} />
-                {isLoaded? names.length > 0? names: <LoadingScreen names={'0'} />: errorLoad? <LoadingScreen names={'error'} />: <LoadingScreen names={'loading'} />}
+                {!loading? rowNames.length > 0? rowNames: <LoadingScreen names={'0'} />: error? <LoadingScreen names={'error'} />: <LoadingScreen names={'loading'} />}
             </div>
         </Col>
     )

@@ -59,11 +59,11 @@ function DashRow (props) {
         let name = "";
 
         switch (statusNum) {
-            case 2:
+            case 1:
                 name = " semi-okay";
                 break;
             
-            case 3:
+            case 2:
                 name = " not-okay";
                 break;
         
